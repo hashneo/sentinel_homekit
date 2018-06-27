@@ -1,4 +1,4 @@
-//declare function require(name:string);
+'use strict';
 
 const Bridge = require('hap-nodejs').Bridge;
 const Service = require('hap-nodejs').Service;
@@ -6,15 +6,15 @@ const Characteristic = require('hap-nodejs').Characteristic;
 const Accessory = require('hap-nodejs').Accessory;
 const accessoryStorage = require('node-persist');
 
-let uuidv4 = require( 'uuid/v4' );
+const uuidv4 = require( 'uuid/v4' );
 
-let chalk = require('chalk');
-let qrcode = require('qrcode-terminal');
-var User = require('./user').User;
+const chalk = require('chalk');
+const qrcode = require('qrcode-terminal');
+const User = require('./user').User;
 
-var Logger = require('sentinel-common').logger;
+const Logger = require('sentinel-common').logger;
 
-var log = new Logger();
+let log = new Logger();
 
 function server() {
 
@@ -52,31 +52,24 @@ function server() {
             callback(); // success
         });
 
+        // Add them all to the bridge
+        /*
+        accessories.forEach(function(accessory) {
+            bridge.addBridgedAccessory(accessory);
+        });
+*/
         let publishInfo = {
             username: "CC:22:3D:E3:CE:30",
             port: 0,
             pincode: "031-45-154",
             category: Accessory.Categories.BRIDGE
         };
-/*
-        if (bridgeConfig.setupID && bridgeConfig.setupID.length === 4) {
-            publishInfo['setupID'] = bridgeConfig.setupID;
-        }
-*/
+
         bridge.publish(publishInfo, false);
 
         printSetupInfo();
         printPin(publishInfo.pincode);
 
-        var signals = { 'SIGINT': 2, 'SIGTERM': 15 };
-        Object.keys(signals).forEach(function (signal) {
-            process.on(signal, function () {
-                bridge.unpublish();
-                setTimeout(function (){
-                    process.exit(128 + signals[signal]);
-                }, 1000)
-            });
-        });
     };
 
     function printPin(pin){
@@ -101,3 +94,13 @@ function server() {
 let s = new server();
 
 s.publish();
+
+let signals = { 'SIGINT': 2, 'SIGTERM': 15 };
+Object.keys(signals).forEach(function (signal) {
+    process.on(signal, function () {
+        bridge.unpublish();
+        setTimeout(function (){
+            process.exit(128 + signals[signal]);
+        }, 1000)
+    });
+});
