@@ -9,10 +9,29 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "array.prototype.find": "^2.0.0",
+    "body-parser": "^1.15.0",
     "chalk": "^2.4.1",
+    "consul": "^0.27.0",
+    "cookie-parser": "^1.4.3",
+    "deepmerge": "^1.1.1",
+    "express": "^4.12.3",
     "hap-nodejs": "^0.4.46",
+    "jwt-verifier-client": "^1.0.4",
+    "moment": "^2.22.2",
+    "mongodb": "^2.2.11",
+    "mysql": "^2.11.1",
+    "newrelic": "^4.2.0",
+    "node-cache": "^4.1.0",
+    "nodemailer": "^4.3.1",
+    "q": "^1.4.1",
     "qrcode-terminal": "^0.12.0",
+    "redis": "^2.6.2",
+    "request": "^2.75.0",
     "sentinel-common": "git+http://gitlab.steventaylor.me/sentinel/common.git",
-    "uuid": "^3.2.1"
+    "swagger-express-mw": "^0.7.0",
+    "swagger-tools": "^0.10.3",
+    "uuid": "^3.2.1",
+    "websocket": "^1.0.26"
   }
 }
