@@ -12,6 +12,7 @@
     "array.prototype.find": "^2.0.0",
     "body-parser": "^1.15.0",
     "chalk": "^2.4.1",
+    "color-convert": "^1.9.2",
     "consul": "^0.27.0",
     "cookie-parser": "^1.4.3",
     "deepmerge": "^1.1.1",

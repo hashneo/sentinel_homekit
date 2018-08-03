@@ -4,8 +4,6 @@ const auth = require('../sentinel_common/lib/auth');
 const request = require('request');
 const WebSocketClient = require('websocket').client;
 
-let client = new WebSocketClient();
-
 function server() {
 
     const that = this;
@@ -131,30 +129,36 @@ function server() {
 
     function connectWebSocket(){
 
+        let client = new WebSocketClient();
+
         client.on('connectFailed', function(error) {
             console.log('Connect Error: ' + error.toString());
+            setTimeout( connectWebSocket(), 5000 );
         });
 
         client.on('connect', function(connection) {
+
             console.log('WebSocket Client Connected');
+
             connection.on('error', function(error) {
                 console.log("Connection Error: " + error.toString());
+                setTimeout( connectWebSocket(), 5000 );
             });
+
             connection.on('close', function() {
                 console.log('echo-protocol Connection Closed');
-                connectWebSocket();
+                setTimeout( connectWebSocket(), 5000 );
             });
+
             connection.on('message', function(message) {
                 if (message.type === 'utf8') {
-
                     let data = JSON.parse(message.utf8Data);
 
                     if (subscriptions[data.device])
                         subscriptions[data.device]( data.status );
-
-                   // console.log("Received: '" +  + "'");
                 }
             });
+
         });
 
         auth.login(global.auth.endpoint, global.config.auth)
