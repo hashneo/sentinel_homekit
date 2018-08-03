@@ -1,6 +1,6 @@
 'use strict';
 
-const auth = require('../sentinel_common/lib/auth');
+const auth = require('sentinel-common').auth;
 const request = require('request');
 const WebSocketClient = require('websocket').client;
 
