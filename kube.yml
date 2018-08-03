@@ -31,7 +31,7 @@ spec:
       containers:
         -
           name: sentinel-homekit
-          image: docker.steventaylor.me/sentinel/services/homekit/homekit-x86_64:latest-staging
+          image: docker.steventaylor.me/sentinel/services/homekit/homekit-x86_64:latest
           imagePullPolicy: Always
           env:
             -
