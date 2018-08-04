@@ -83,7 +83,7 @@ function homekit(config) {
 
         let publishInfo = {
             username: "CC:22:3D:E3:CE:32",
-            port: process.env.PORT || 0,
+            port: process.env.HK_PORT || 0,
             pincode: "031-45-155",
             category: Accessory.Categories.BRIDGE
         };
