@@ -12,6 +12,7 @@ function light(server, type, uuid, name) {
 
         power : false,
         brightness : 0,
+        lastBrightness : 0,
         saturation : 0,
         hue : 0,
         manufacturer : 'sentinel',
@@ -46,29 +47,51 @@ function light(server, type, uuid, name) {
         },
 
         getPower: function() { //get power of accessory
+
             return new Promise( (fulfill, reject) => {
-                fulfill( this.power );
+                LightController.status()
+                    .then( () => {
+                        fulfill( this.power );
+                    })
+                    .catch( (err) =>{
+                        reject(err);
+                    });
             })
         },
 
         setBrightness: function(value) { //set brightness
-            this.brightness = value;
-            let rgb = this.getRGB();
-            console.log(rgb);
 
-            if ( type === 'light.dimmable.rgbw')
+            if ( value == this.brightness )
+                return;
+
+            this.brightness = value;
+
+            if ( type === 'light.dimmable.rgbw') {
+                let rgb = this.getRGB();
+                console.log(rgb);
                 return server.call(`/light/${uuid}/rgb/color?r=${rgb.r}&g=${rgb.g}&b=${rgb.b}&w=0`);
+            }
             else
                 return server.call(`/light/${uuid}/level/${value}`);
         },
 
         getBrightness: function() { //get brightness
             return new Promise( (fulfill, reject) => {
-                fulfill( this.brightness );
+                LightController.status()
+                    .then( () => {
+                        fulfill( this.brightness );
+                    })
+                    .catch( (err) =>{
+                        reject(err);
+                    });
             });
         },
 
         setSaturation: function(value) {
+
+            if ( value == this.saturation )
+                return;
+
             this.saturation = value;
             let rgb = this.getRGB();
             console.log(rgb);
@@ -77,11 +100,21 @@ function light(server, type, uuid, name) {
 
         getSaturation: function() {
             return new Promise( (fulfill, reject) => {
-                fulfill( this.saturation );
+                LightController.status()
+                    .then( () => {
+                        fulfill( this.saturation );
+                    })
+                    .catch( (err) =>{
+                        reject(err);
+                    });
             });
         },
 
         setHue: function(value) { //set brightness
+
+            if ( value == this.hue )
+                return;
+
             this.hue = value;
             let rgb = this.getRGB();
             console.log(rgb);
@@ -90,7 +123,13 @@ function light(server, type, uuid, name) {
 
         getHue: function() { //get hue
             return new Promise( (fulfill, reject) => {
-                fulfill( this.hue );
+                LightController.status()
+                    .then( () => {
+                        fulfill( this.hue );
+                    })
+                    .catch( (err) =>{
+                        reject(err);
+                    });
             });
         },
 
@@ -102,7 +141,20 @@ function light(server, type, uuid, name) {
             return new Promise( (fulfill, reject) =>{
                 server.call(`/device/${uuid}/status`)
                     .then ( (data) => {
-                        fulfill( data[0] );
+                        data = data[0];
+                        if ( type.startsWith( 'light.dimmable' ) ) {
+                            this.power = (data.level > 0);
+                        } else {
+                            this.power = data.on;
+                        }
+
+                        if ( type === 'light.dimmable.rgbw') {
+                            this.setRGB(data.color);
+                        } else if ( type === 'light.dimmable') {
+                            this.brightness = data.level;
+                        }
+
+                        fulfill( data );
                     })
                     .catch( (err) => {
                         reject(err);
@@ -137,8 +189,16 @@ function light(server, type, uuid, name) {
         .addService(Service.Lightbulb, name) // services exposed to the user should have "names" like "Light" for this case
         .getCharacteristic(Characteristic.On)
         .on('set', function(value, callback) {
-            LightController.setPower(value);
 
+            LightController.power = value;
+
+            if ( value && type.startsWith( 'light.dimmable' ) ) {
+                value = LightController.brightness;
+                LightController.brightness = 0;
+                LightController.setBrightness( value );
+            } else {
+                LightController.setPower(value);
+            }
             // Our light is synchronous - this value has been successfully set
             // Invoke the callback when you finished processing the request
             // If it's going to take more than 1s to finish the request, try to invoke the callback
@@ -177,44 +237,49 @@ function light(server, type, uuid, name) {
             lightAccessory
                 .getService(Service.Lightbulb)
                 .getCharacteristic(Characteristic.Brightness)
-                .updateValue(LightController.getBrightness());
+                .updateValue(LightController.brightness);
             lightAccessory
                 .getService(Service.Lightbulb)
                 .getCharacteristic(Characteristic.Saturation)
-                .updateValue(LightController.getSaturation());
+                .updateValue(LightController.saturation);
             lightAccessory
                 .getService(Service.Lightbulb)
                 .getCharacteristic(Characteristic.Hue)
-                .updateValue(LightController.getHue());
+                .updateValue(LightController.hue);
 
         } else if ( type === 'light.dimmable') {
 
-            LightController.brightness = status.level;
-            lightAccessory
-                .getService(Service.Lightbulb)
-                .getCharacteristic(Characteristic.Brightness)
-                .updateValue(LightController.getBrightness());
+            if ( LightController.power ) {
+                LightController.brightness = status.level;
+                lightAccessory
+                    .getService(Service.Lightbulb)
+                    .getCharacteristic(Characteristic.Brightness)
+                    .updateValue(LightController.brightness);
+            }
         }
     });
 
 
     // also add an "optional" Characteristic for Brightness
-    lightAccessory
-        .getService(Service.Lightbulb)
-        .addCharacteristic(Characteristic.Brightness)
-        .on('set', function (value, callback) {
-            LightController.setBrightness(value);
-            callback();
-        })
-        .on('get', function (callback) {
-            LightController.getBrightness()
-                .then((value) => {
-                    callback(null, value);
-                })
-                .catch((err) => {
-                    callback(err, null);
-                });
-        });
+    if ( type.startsWith( 'light.dimmable' ) ) {
+        lightAccessory
+            .getService(Service.Lightbulb)
+            .addCharacteristic(Characteristic.Brightness)
+            .on('set', function (value, callback) {
+                LightController.lastBrightness = value;
+                LightController.setBrightness(value);
+                callback();
+            })
+            .on('get', function (callback) {
+                LightController.getBrightness()
+                    .then((value) => {
+                        callback(null, value);
+                    })
+                    .catch((err) => {
+                        callback(err, null);
+                    });
+            });
+    }
 
     if ( type === 'light.dimmable.rgbw') {
         // also add an "optional" Characteristic for Saturation

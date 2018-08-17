@@ -109,6 +109,21 @@ function lock(server, uuid, name) {
                 });
         });
 
+    lockAccessory
+        .getService(Service.LockMechanism)
+        .getCharacteristic(Characteristic.LockTargetState)
+        .on('get', function (callback) {
+
+            LockController.status()
+                .then( (value) =>{
+                    callback(null, value ? Characteristic.LockTargetState.SECURED : Characteristic.LockTargetState.UNSECURED);
+                })
+                .catch( (err) =>{
+                    log.error( err );
+                    callback(err, null);
+                });
+        });
+
     return lockAccessory;
 }
 

@@ -42,7 +42,7 @@ function homekit(config) {
 
         info.setCharacteristic(Characteristic.Manufacturer, `Sentinel`);
         info.setCharacteristic(Characteristic.Model, `Sentinel`);
-        info.setCharacteristic(Characteristic.SerialNumber, 'CC:22:3D:E3:CE:32');
+        info.setCharacteristic(Characteristic.SerialNumber, 'CC:22:3D:E3:CE:33');
         info.setCharacteristic(Characteristic.FirmwareRevision, '0.1');
 
         bridge.on('listening', function(port) {
@@ -58,12 +58,25 @@ function homekit(config) {
 
         const LightAccessory = require('./accessories/light');
         const LockAccessory = require('./accessories/lock');
+        const OutletAccessory = require('./accessories/outlet');
         const GarageAccessory = require('./accessories/garage-opener');
+        const MotionSensorAccessory = require('./accessories/motion-sensor');
+        const TemperatureSensorAccessory = require('./accessories/temperature-sensor');
+        const HumiditySensorAccessory = require('./accessories/humidity-sensor');
+        const ContactSensorAccessory = require('./accessories/contact-sensor');
+        const LeakSensorAccessory = require('./accessories/leak-sensor');
+        const Co2SensorAccessory = require('./accessories/co2-sensor');
+        const SmokeSensorAccessory = require('./accessories/smoke-sensor');
+        const SecuritySystemAccessory = require('./accessories/security-system');
 
         devices.forEach(function(device) {
 
             if (device.type.indexOf('light.') == 0 ){
                 accessories.push( new LightAccessory( server, device.type, device.id, device.name ) );
+            }
+
+            if (device.type === 'switch' ){
+                accessories.push( new OutletAccessory( server, device.type, device.id, device.name ) );
             }
 
             if (device.type === 'lock'){
@@ -73,7 +86,41 @@ function homekit(config) {
             if (device.type === 'garage.opener'){
                 accessories.push( new GarageAccessory( server, device.id, device.name ) );
             }
+
+            if (device.type === 'sensor.motion'){
+                accessories.push( new MotionSensorAccessory( server, device.id, device.name ) );
+            }
+
+            if (device.type === 'sensor.temperature'){
+                accessories.push( new TemperatureSensorAccessory( server, device.id, device.name ) );
+            }
+
+            if (device.type === 'sensor.humidity'){
+                accessories.push( new HumiditySensorAccessory( server, device.id, device.name ) );
+            }
+
+            if (device.type === 'sensor.door' || device.type === 'sensor.window'){
+                accessories.push( new ContactSensorAccessory( server, device.id, device.name ) );
+            }
+
+            if (device.type === 'sensor.leak'){
+                accessories.push( new LeakSensorAccessory( server, device.id, device.name ) );
+            }
+
+            if (device.type === 'sensor.co2'){
+                accessories.push( new Co2SensorAccessory( server, device.id, device.name ) );
+            }
+
+            if (device.type === 'sensor.smoke' || device.type === 'sensor.heat'){
+                accessories.push( new SmokeSensorAccessory( server, device.id, device.name ) );
+            }
+
+            if (device.type === 'alarm.partition'){
+                accessories.push( new SecuritySystemAccessory( server, device.id, device.name ) );
+            }
+
         });
+
 
         // Add them all to the bridge
 
@@ -82,7 +129,7 @@ function homekit(config) {
         });
 
         let publishInfo = {
-            username: "CC:22:3D:E3:CE:32",
+            username: "CC:22:3D:E3:CE:33",
             port: process.env.HK_PORT || 0,
             pincode: "031-45-155",
             category: Accessory.Categories.BRIDGE

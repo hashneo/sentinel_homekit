@@ -133,7 +133,7 @@ function server() {
 
         client.on('connectFailed', function(error) {
             console.log('Connect Error: ' + error.toString());
-            setTimeout( connectWebSocket(), 5000 );
+            setTimeout( connectWebSocket, 5000 );
         });
 
         client.on('connect', function(connection) {
@@ -142,12 +142,12 @@ function server() {
 
             connection.on('error', function(error) {
                 console.log("Connection Error: " + error.toString());
-                setTimeout( connectWebSocket(), 5000 );
+                setTimeout( connectWebSocket, 5000 );
             });
 
             connection.on('close', function() {
                 console.log('echo-protocol Connection Closed');
-                setTimeout( connectWebSocket(), 5000 );
+                setTimeout( connectWebSocket, 5000 );
             });
 
             connection.on('message', function(message) {
@@ -158,7 +158,6 @@ function server() {
                         subscriptions[data.device]( data.status );
                 }
             });
-
         });
 
         auth.login(global.auth.endpoint, global.config.auth)
