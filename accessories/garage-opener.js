@@ -106,14 +106,25 @@ function lock(server, uuid, name) {
         .setCharacteristic(Characteristic.TargetDoorState, Characteristic.TargetDoorState.CLOSED) // force initial state to CLOSED
         .getCharacteristic(Characteristic.TargetDoorState)
         .on('set', function (value, callback) {
-
             if (value == Characteristic.TargetDoorState.CLOSED) {
-                GarageController.close();
-                callback();
+                GarageController.close()
+                    .then ( () =>{
+                        callback();
+                    })
+                    .catch((err) =>{
+                        console.error(err);
+                        callback(err);
+                    });
             }
             else if (value == Characteristic.TargetDoorState.OPEN) {
-                GarageController.open();
-                callback();
+                GarageController.open()
+                    .then ( () =>{
+                        callback();
+                    })
+                    .catch((err) =>{
+                        console.error(err);
+                        callback(err);
+                    });
             }
         });
 

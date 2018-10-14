@@ -88,26 +88,20 @@ function securitySystem(server, uuid, name) {
 
     function getCurrentState(value){
 
+        if ( !value || value === null )
+            return null;
+
         if ( value.mode === 'armed' || value.mode === 'force' || value.mode === 'vacation' )
             value = Characteristic.SecuritySystemCurrentState.AWAY_ARM;
-
-        if ( value.mode === 'stay' || value.mode === 'stay-instant' )
+        else if ( value.mode === 'stay' || value.mode === 'stay-instant' )
             value = Characteristic.SecuritySystemCurrentState.STAY_ARM;
-
-        if ( value.mode === 'night' || value.mode === 'night-instant' )
+        else if ( value.mode === 'night' || value.mode === 'night-instant' )
             value = Characteristic.SecuritySystemCurrentState.NIGHT_ARM;
-
-        if (value.mode === 'exit-delay' || value.mode === 'entry-delay' ){
+        else if (value.mode === 'exit-delay' || value.mode === 'entry-delay' )
             value = Controller.targetMode;
-        }
-
-        if ( value.mode === 'not-ready'
-            || value.mode === 'failed'
-            || value.mode === 'disarmed'
-            || value.mode === 'ready' )
+        else if ( value.mode === 'not-ready' || value.mode === 'failed' || value.mode === 'disarmed' || value.mode === 'ready' )
             value = Characteristic.SecuritySystemCurrentState.DISARMED;
-
-        if (value.alarming)
+        else if (value.alarming)
             value = Characteristic.SecuritySystemCurrentState.ALARM_TRIGGERED;
 
         return value;

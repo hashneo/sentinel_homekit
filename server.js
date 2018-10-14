@@ -41,11 +41,11 @@ function server() {
 
                         try {
                             body = JSON.parse(body);
-
+/*
                             if ( body.result !== 'ok' ) {
                                 return reject(new Error('result was not ok'));
                             }
-
+*/
                             fulfill(body.data);
                         }
                         catch (err) {
