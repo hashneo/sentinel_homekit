@@ -59,9 +59,6 @@ consul.kv.get(`config/sentinel/${moduleName}`, function(err, result) {
     global.config = config;
     global.config.save();
 
-    if (global.config.newrelic) {
-        require('newrelic');
-    }
 
     //if (process.env.DEBUG) {
         global.auth = {'endpoint': 'https://home.steventaylor.me'};
