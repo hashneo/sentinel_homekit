@@ -37,15 +37,6 @@ spec:
             -
               name: "PORT"
               value: "5000"
-            -
-              name: "CONSUL"
-              value: "consul.steventaylor.me"
-            -
-              name: "REDIS"
-              value: "redis-redis"
-            -
-              name: "MONGO"
-              value: "mongo-mongodb:27017/sentinel"
           ports:
             -
               containerPort: 5000
