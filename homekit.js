@@ -42,7 +42,7 @@ function homekit(config) {
 
         info.setCharacteristic(Characteristic.Manufacturer, `Sentinel`);
         info.setCharacteristic(Characteristic.Model, `Sentinel`);
-        info.setCharacteristic(Characteristic.SerialNumber, 'CC:22:3D:E3:CE:33');
+        info.setCharacteristic(Characteristic.SerialNumber, process.env.HK_SERIAL || 'CC:22:3D:E3:CE:33');
         info.setCharacteristic(Characteristic.FirmwareRevision, '0.1');
 
         bridge.on('listening', function(port) {
@@ -129,9 +129,9 @@ function homekit(config) {
         });
 
         let publishInfo = {
-            username: "CC:22:3D:E3:CE:33",
+            username: process.env.HK_SERIAL || "CC:22:3D:E3:CE:33",
             port: process.env.HK_PORT || 0,
-            pincode: "031-45-155",
+            pincode: process.env.HK_PINCODE || "031-45-155",
             category: Accessory.Categories.BRIDGE
         };
 
