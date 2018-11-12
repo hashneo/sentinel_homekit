@@ -6,7 +6,6 @@ const express = require('express');
 const app = express();
 const bodyParser = require('body-parser');
 const cookieParser = require('cookie-parser');
-const redis = require('redis');
 
 const uuid = require('uuid');
 
@@ -21,6 +20,8 @@ global.moduleName = moduleName;
 
 app.use(bodyParser.json({limit: '50mb'}));
 app.use(cookieParser());
+
+global.consul = consul;
 
 let appConfig = {
     appRoot: __dirname, // required config
@@ -56,9 +57,12 @@ consul.kv.get(`config/sentinel/${moduleName}`, function(err, result) {
         });
     };
 
+    config.path = () => {
+        return `config/sentinel/${moduleName}`;
+    };
+
     global.config = config;
     global.config.save();
-
 
     //if (process.env.DEBUG) {
         global.auth = {'endpoint': 'https://home.steventaylor.me'};
@@ -100,6 +104,7 @@ consul.kv.get(`config/sentinel/${moduleName}`, function(err, result) {
             if (swaggerExpress.runner.swagger.paths['/health']) {
                 console.log(`you can get /health?id=${serviceId} on port ${port}`);
             }
+
             global.module = require(`./${moduleName}.js`)(config);
 
         });

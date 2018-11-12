@@ -24,6 +24,7 @@
     "mysql": "^2.11.1",
     "newrelic": "^4.2.0",
     "node-cache": "^4.1.0",
+    "node-docker-api": "^1.1.22",
     "nodemailer": "^4.3.1",
     "q": "^1.4.1",
     "qrcode-terminal": "^0.12.0",

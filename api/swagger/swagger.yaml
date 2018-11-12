@@ -29,7 +29,7 @@ securityDefinitions:
     authorizationUrl: https://my_aouth/
 
 security:
-  - Oauth: []
+- Oauth: []
 
 paths:
   /health:
@@ -49,8 +49,56 @@ paths:
         default:
           $ref: '#/responses/Error'
 
+  /bridge:
+    x-swagger-router-controller: bridge
+    get:
+      tags:
+      - bridge
+      operationId: getBridge
+      security:
+      - Oauth:
+        - user
+      responses:
+        200:
+          description: bridge information
+          schema:
+            $ref: '#/definitions/BridgeInformation'
+        default:
+          $ref: '#/responses/Error'
+    delete:
+      tags:
+      - bridge
+      operationId: deleteBridge
+      security:
+      - Oauth:
+        - user
+      responses:
+        200:
+          description: ok
+        default:
+          $ref: '#/responses/Error'
+    post:
+      tags:
+      - bridge
+      operationId: createBridge
+      security:
+      - Oauth:
+        - user
+      parameters:
+      - in: body
+        name: data
+        schema:
+          $ref: '#/definitions/BridgeData'
+      responses:
+        200:
+          description: bridge information
+          schema:
+            $ref: '#/definitions/BridgeInformation'
+        default:
+          $ref: '#/responses/Error'
+
   /swagger:
-      x-swagger-pipe: swagger_raw
+    x-swagger-pipe: swagger_raw
 
 responses:
 
@@ -63,8 +111,8 @@ definitions:
 
   Error:
     required:
-      - code
-      - message
+    - code
+    - message
     properties:
       code:
         type: integer
@@ -72,6 +120,25 @@ definitions:
       message:
         type: string
 
+  BridgeData:
+    type: object
+    required:
+      - name
+    additionalProperties: false
+    properties:
+      name:
+        type: string
+
+  BridgeInformation:
+    type: object
+    additionalProperties: false
+    properties:
+      serial:
+        type: string
+      pinCode:
+        type: string
+      setupURI:
+        type: string
 
   Status:
     type: object
