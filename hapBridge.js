@@ -159,7 +159,7 @@ function hapBridge(config, server) {
 
         let publishInfo = {
             username: serial,
-            port: 0,
+            port: config.port || 0,
             pincode: pinCode,
             category: Accessory.Categories.BRIDGE
         };
