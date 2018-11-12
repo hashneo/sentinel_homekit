@@ -25,8 +25,9 @@ function homekit(config) {
 
             server.loadSystem()
                 .then((system) => {
-                    let bridgeInfo = hapBridge.publish(system.devices);
-
+                    return hapBridge.publish(system.devices);
+                })
+                .then((bridgeInfo) => {
                     bridges[bridgeInfo.serial] = bridgeInfo;
 
                     let path = global.config.path() + '/' + bridgeInfo.serial;

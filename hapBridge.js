@@ -67,126 +67,133 @@ function hapBridge(config, server) {
 
     this.publish = function (devices) {
 
-        let info = bridge.getService(Service.AccessoryInformation);
+        return new Promise( (fulfill, reject) => {
 
-        let serial = config.serial || genSerial();
-        let pinCode = config.pinCode || `${generate(3)}-${generate(2)}-${generate(3)}`;
+            let info = bridge.getService(Service.AccessoryInformation);
 
-        info.setCharacteristic(Characteristic.Manufacturer, `Sentinel`);
-        info.setCharacteristic(Characteristic.Model, `Sentinel`);
-        info.setCharacteristic(Characteristic.SerialNumber, serial);
-        info.setCharacteristic(Characteristic.FirmwareRevision, '0.1');
+            let serial = config.serial || genSerial();
+            let pinCode = config.pinCode || `${generate(3)}-${generate(2)}-${generate(3)}`;
 
-        bridge.on('listening', function(port) {
-            log.info("Homebridge is running on port %s.", port);
-        });
+            info.setCharacteristic(Characteristic.Manufacturer, `Sentinel`);
+            info.setCharacteristic(Characteristic.Model, `Sentinel`);
+            info.setCharacteristic(Characteristic.SerialNumber, serial);
+            info.setCharacteristic(Characteristic.FirmwareRevision, '0.1');
 
-        bridge.on('identify', function(paired, callback) {
-            log.info('Node Bridge identify');
-            callback(); // success
-        });
+            bridge.on('listening', function (port) {
+                log.info("Homebridge is running on port %s.", port);
 
-        let accessories = [];
+                let bridgeInfo = {
+                    name: config.name,
+                    port: port,
+                    serial: serial,
+                    pinCode: pinCode,
+                    setupURI: bridge.setupURI()
+                };
 
-        const LightAccessory = require('./accessories/light');
-        const LockAccessory = require('./accessories/lock');
-        const OutletAccessory = require('./accessories/outlet');
-        const GarageAccessory = require('./accessories/garage-opener');
-        const MotionSensorAccessory = require('./accessories/motion-sensor');
-        const TemperatureSensorAccessory = require('./accessories/temperature-sensor');
-        const HumiditySensorAccessory = require('./accessories/humidity-sensor');
-        const ContactSensorAccessory = require('./accessories/contact-sensor');
-        const LeakSensorAccessory = require('./accessories/leak-sensor');
-        const Co2SensorAccessory = require('./accessories/co2-sensor');
-        const SmokeSensorAccessory = require('./accessories/smoke-sensor');
-        const SecuritySystemAccessory = require('./accessories/security-system');
-
-        devices.forEach(function(device) {
-
-            if (device.type.indexOf('light.') == 0 ){
-                accessories.push( new LightAccessory( server, device.type, device.id, device.name ) );
-            }
-
-            if (device.type === 'switch' ){
-                accessories.push( new OutletAccessory( server, device.type, device.id, device.name ) );
-            }
-
-            if (device.type === 'lock'){
-                accessories.push( new LockAccessory( server, device.id, device.name ) );
-            }
-
-            if (device.type === 'garage.opener'){
-                accessories.push( new GarageAccessory( server, device.id, device.name ) );
-            }
-
-            if (device.type === 'sensor.motion'){
-                accessories.push( new MotionSensorAccessory( server, device.id, device.name ) );
-            }
-
-            if (device.type === 'sensor.temperature'){
-                accessories.push( new TemperatureSensorAccessory( server, device.id, device.name ) );
-            }
-
-            if (device.type === 'sensor.humidity'){
-                accessories.push( new HumiditySensorAccessory( server, device.id, device.name ) );
-            }
-
-            if (device.type === 'sensor.door' || device.type === 'sensor.window'){
-                accessories.push( new ContactSensorAccessory( server, device.id, device.name ) );
-            }
-
-            if (device.type === 'sensor.leak'){
-                accessories.push( new LeakSensorAccessory( server, device.id, device.name ) );
-            }
-
-            if (device.type === 'sensor.co2'){
-                accessories.push( new Co2SensorAccessory( server, device.id, device.name ) );
-            }
-
-            if (device.type === 'sensor.smoke' || device.type === 'sensor.heat'){
-                accessories.push( new SmokeSensorAccessory( server, device.id, device.name ) );
-            }
-
-            if (device.type === 'alarm.partition'){
-                accessories.push( new SecuritySystemAccessory( server, device.id, device.name ) );
-            }
-        });
-
-        // Add them all to the bridge
-        accessories.forEach(function(accessory) {
-            bridge.addBridgedAccessory(accessory);
-        });
-
-        let publishInfo = {
-            username: serial,
-            port: config.port || 0,
-            pincode: pinCode,
-            category: Accessory.Categories.BRIDGE
-        };
-
-        bridge.publish(publishInfo, false);
-/*
-        printSetupInfo();
-        printPin(publishInfo.pincode);
-*/
-        let bridgeInfo = {
-            name: config.name,
-            serial: serial,
-            pinCode: pinCode,
-            setupURI: bridge.setupURI()
-        };
-
-        let signals = { 'SIGINT': 2, 'SIGTERM': 15 };
-        Object.keys(signals).forEach(function (signal) {
-            process.on(signal, function () {
-                bridge.unpublish();
-                setTimeout(function (){
-                    process.exit(128 + signals[signal]);
-                }, 1000)
+                fulfill( bridgeInfo );
             });
+
+            bridge.on('identify', function (paired, callback) {
+                log.info('Node Bridge identify');
+                callback(); // success
+            });
+
+            let accessories = [];
+
+            const LightAccessory = require('./accessories/light');
+            const LockAccessory = require('./accessories/lock');
+            const OutletAccessory = require('./accessories/outlet');
+            const GarageAccessory = require('./accessories/garage-opener');
+            const MotionSensorAccessory = require('./accessories/motion-sensor');
+            const TemperatureSensorAccessory = require('./accessories/temperature-sensor');
+            const HumiditySensorAccessory = require('./accessories/humidity-sensor');
+            const ContactSensorAccessory = require('./accessories/contact-sensor');
+            const LeakSensorAccessory = require('./accessories/leak-sensor');
+            const Co2SensorAccessory = require('./accessories/co2-sensor');
+            const SmokeSensorAccessory = require('./accessories/smoke-sensor');
+            const SecuritySystemAccessory = require('./accessories/security-system');
+
+            devices.forEach(function (device) {
+
+                if (device.type.indexOf('light.') == 0) {
+                    accessories.push(new LightAccessory(server, device.type, device.id, device.name));
+                }
+
+                if (device.type === 'switch') {
+                    accessories.push(new OutletAccessory(server, device.type, device.id, device.name));
+                }
+
+                if (device.type === 'lock') {
+                    accessories.push(new LockAccessory(server, device.id, device.name));
+                }
+
+                if (device.type === 'garage.opener') {
+                    accessories.push(new GarageAccessory(server, device.id, device.name));
+                }
+
+                if (device.type === 'sensor.motion') {
+                    accessories.push(new MotionSensorAccessory(server, device.id, device.name));
+                }
+
+                if (device.type === 'sensor.temperature') {
+                    accessories.push(new TemperatureSensorAccessory(server, device.id, device.name));
+                }
+
+                if (device.type === 'sensor.humidity') {
+                    accessories.push(new HumiditySensorAccessory(server, device.id, device.name));
+                }
+
+                if (device.type === 'sensor.door' || device.type === 'sensor.window') {
+                    accessories.push(new ContactSensorAccessory(server, device.id, device.name));
+                }
+
+                if (device.type === 'sensor.leak') {
+                    accessories.push(new LeakSensorAccessory(server, device.id, device.name));
+                }
+
+                if (device.type === 'sensor.co2') {
+                    accessories.push(new Co2SensorAccessory(server, device.id, device.name));
+                }
+
+                if (device.type === 'sensor.smoke' || device.type === 'sensor.heat') {
+                    accessories.push(new SmokeSensorAccessory(server, device.id, device.name));
+                }
+
+                if (device.type === 'alarm.partition') {
+                    accessories.push(new SecuritySystemAccessory(server, device.id, device.name));
+                }
+            });
+
+            // Add them all to the bridge
+            accessories.forEach(function (accessory) {
+                bridge.addBridgedAccessory(accessory);
+            });
+
+            let publishInfo = {
+                username: serial,
+                port: config.port || 0,
+                pincode: pinCode,
+                category: Accessory.Categories.BRIDGE
+            };
+
+            bridge.publish(publishInfo, false);
+            /*
+                    printSetupInfo();
+                    printPin(publishInfo.pincode);
+            */
+
+            let signals = {'SIGINT': 2, 'SIGTERM': 15};
+            Object.keys(signals).forEach(function (signal) {
+                process.on(signal, function () {
+                    bridge.unpublish();
+                    setTimeout(function () {
+                        process.exit(128 + signals[signal]);
+                    }, 1000)
+                });
+            });
+
         });
 
-        return bridgeInfo;
     };
 /*
     function printPin(pin){
