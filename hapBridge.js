@@ -18,9 +18,7 @@ function hapBridge(config, server) {
 */
     const User = require('./user').User;
 
-    const Logger = require('sentinel-common').logger;
-
-    let log = new Logger();
+    const logger = require('sentinel-common').logger;
 
     let that = this;
 
@@ -80,7 +78,7 @@ function hapBridge(config, server) {
             info.setCharacteristic(Characteristic.FirmwareRevision, '0.1');
 
             bridge.on('listening', function (port) {
-                log.info("Homebridge is running on port %s.", port);
+                logger.info(`Homebridge is running on port ${port}`);
 
                 let bridgeInfo = {
                     name: config.name,
@@ -94,7 +92,7 @@ function hapBridge(config, server) {
             });
 
             bridge.on('identify', function (paired, callback) {
-                log.info('Node Bridge identify');
+                logger.info('Node Bridge identify');
                 callback(); // success
             });
 

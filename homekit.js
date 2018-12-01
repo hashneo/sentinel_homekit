@@ -8,9 +8,7 @@ function homekit(config) {
 
     var moment = require('moment');
 
-    const Logger = require('sentinel-common').logger;
-
-    let log = new Logger();
+    const logger = require('sentinel-common').logger;
 
     let that = this;
 

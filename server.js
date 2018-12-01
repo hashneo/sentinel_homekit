@@ -3,6 +3,7 @@
 const auth = require('sentinel-common').auth;
 const request = require('request');
 const WebSocketClient = require('websocket').client;
+const logger = require('sentinel-common').logger;
 
 function server() {
 
@@ -28,7 +29,7 @@ function server() {
                         method: 'GET'
                     };
 
-                    console.log('calling => ' + options.uri );
+                    logger.info(`calling => ${options.uri}`);
 
                     request(options, (err, resp, body) => {
                         if (err) {
@@ -138,7 +139,7 @@ function server() {
 
         client.on('connect', function(connection) {
 
-            console.log('WebSocket Client Connected');
+            logger.info('WebSocket Client Connected');
 
             connection.on('error', function(error) {
                 console.log("Connection Error: " + error.toString());

@@ -1,13 +1,11 @@
 const Accessory = require('hap-nodejs').Accessory;
 const Service = require('hap-nodejs').Service;
 const Characteristic = require('hap-nodejs').Characteristic;
-const Logger = require('sentinel-common').logger;
+const logger = require('sentinel-common').logger;
 
 function lock(server, uuid, name) {
 
     let that = this;
-
-    let log = new Logger();
 
     let GarageController = {
 
@@ -139,7 +137,7 @@ function lock(server, uuid, name) {
                     callback(null, value);
                 })
                 .catch( (err) =>{
-                    log.error( err );
+                    logger.error( err );
                     callback(err, null);
                 });
 
