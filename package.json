@@ -16,7 +16,7 @@
     "consul": "^0.27.0",
     "cookie-parser": "^1.4.3",
     "deepmerge": "^1.1.1",
-    "express": "^4.16.4",
+    "express": "^4.17.1",
     "hap-nodejs": "^0.4.47",
     "jwt-verifier-client": "^1.0.4",
     "moment": "^2.22.2",
