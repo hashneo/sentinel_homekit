@@ -14,7 +14,7 @@
     "chalk": "^2.4.1",
     "color-convert": "^1.9.3",
     "consul": "^0.27.0",
-    "cookie-parser": "^1.4.3",
+    "cookie-parser": "^1.4.5",
     "deepmerge": "^1.1.1",
     "express": "^4.16.4",
     "hap-nodejs": "^0.4.47",
