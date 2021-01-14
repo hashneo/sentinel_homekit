@@ -61,7 +61,7 @@ function light(server, type, uuid, name) {
 
         setBrightness: function(value) { //set brightness
 
-            if ( value == this.brightness )
+            if ( value === this.brightness )
                 return;
 
             this.brightness = value;
@@ -89,7 +89,7 @@ function light(server, type, uuid, name) {
 
         setSaturation: function(value) {
 
-            if ( value == this.saturation )
+            if ( value === this.saturation )
                 return;
 
             this.saturation = value;
@@ -112,7 +112,7 @@ function light(server, type, uuid, name) {
 
         setHue: function(value) { //set brightness
 
-            if ( value == this.hue )
+            if ( value === this.hue )
                 return;
 
             this.hue = value;
