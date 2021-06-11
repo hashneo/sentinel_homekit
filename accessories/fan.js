@@ -15,7 +15,7 @@ function lock(server, uuid, name) {
 
         lock: function () {
             LockController.locked = true;
-            return server.call(`/lock/${uuid}/closed`);
+            return server.call(`/hvac/fan/${uuid}/closed`);
         },
         unlock: function () {
             LockController.locked = false;

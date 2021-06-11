@@ -1,6 +1,7 @@
 const Accessory = require('hap-nodejs').Accessory;
 const Service = require('hap-nodejs').Service;
 const Characteristic = require('hap-nodejs').Characteristic;
+const logger = require('sentinel-common').logger;
 
 function sensor(server, uuid, name) {
 
@@ -23,7 +24,7 @@ function sensor(server, uuid, name) {
         },
         status: function () {
             return new Promise( (fulfill, reject) =>{
-                server.call(`/device/${uuid}/status`)
+                server.getDeviceStatus(uuid)
                     .then ( (data) => {
                         this.current = fahrenheitToCelcius( data[0].temperature.current );
 
@@ -88,7 +89,7 @@ function sensor(server, uuid, name) {
                     callback(null, SensorController.current);
                 })
                 .catch( (err) =>{
-                    log.error( err );
+                    logger.error( err );
                     callback(err, null);
                 });
 
@@ -105,7 +106,7 @@ function sensor(server, uuid, name) {
                     callback(null, SensorController.lowBattery ? 1 : 0);
                 })
                 .catch( (err) =>{
-                    log.error( err );
+                    logger.error( err );
                     callback(err, null);
                 });
 

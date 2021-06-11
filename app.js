@@ -14,6 +14,8 @@ const consul = require('consul')( {
     promisify: true
 });
 
+const logger = require('sentinel-common').logger;
+
 let moduleName = 'homekit';
 
 global.moduleName = moduleName;
@@ -102,7 +104,7 @@ consul.kv.get(`config/sentinel/${moduleName}`, function(err, result) {
             process.env.SERVICE_ID = serviceId;
 
             if (swaggerExpress.runner.swagger.paths['/health']) {
-                console.log(`you can get /health?id=${serviceId} on port ${port}`);
+                logger.info(`you can get /health?id=${serviceId} on port ${port}`);
             }
 
             global.module = require(`./${moduleName}.js`)(config);

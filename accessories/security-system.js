@@ -1,6 +1,7 @@
 const Accessory = require('hap-nodejs').Accessory;
 const Service = require('hap-nodejs').Service;
 const Characteristic = require('hap-nodejs').Characteristic;
+const logger = require('sentinel-common').logger;
 
 function securitySystem(server, uuid, name) {
 
@@ -11,33 +12,51 @@ function securitySystem(server, uuid, name) {
         manufacturer : 'sentinel',
         model : 'sentinel',
         serialNumber : uuid,
-        alarming : false,
-        armed: false,
-        mode : null,
-        targetMode : null,
+        flags : null,
+        currentMode : Characteristic.SecuritySystemCurrentState.DISARM,
+        targetMode : Characteristic.SecuritySystemTargetState.DISARM,
+        nightMode: false,
 
         setTargetMode: function( mode ){
-            this.targetMode = mode;
 
-            let url = null;
+            return new Promise( (fulfill, reject) => {
 
-            switch(mode) {
-                case Characteristic.SecuritySystemTargetState.STAY_ARM:
-                    url = `/alarm/${uuid}/arm/stay`;
-                    break;
-                case Characteristic.SecuritySystemTargetState.AWAY_ARM:
-                    url = `/alarm/${uuid}/arm/away`;
-                    break;
-                case Characteristic.SecuritySystemTargetState.NIGHT_ARM:
-                    url = `/alarm/${uuid}/arm/night`;
-                    break;
-                case Characteristic.SecuritySystemTargetState.DISARM:
-                    url = `/alarm/${uuid}/disarm`;
-                    break;
-            }
+                if ( this.targetMode === mode )
+                    return fulfill();
 
-            if (url)
-                return server.call(`${url}?pin=${global.config.alarm.pin}`);
+                let url = null;
+
+                switch(mode) {
+                    case Characteristic.SecuritySystemTargetState.STAY_ARM:
+                        url = `/alarm/${uuid}/mode/arm/stay`;
+                        break;
+                    case Characteristic.SecuritySystemTargetState.AWAY_ARM:
+                        url = `/alarm/${uuid}/mode/arm/away`;
+                        break;
+                    case Characteristic.SecuritySystemTargetState.NIGHT_ARM:
+                        url = `/alarm/${uuid}/mode/arm/stay`;
+                        break;
+                    case Characteristic.SecuritySystemTargetState.DISARM:
+                        url = `/alarm/${uuid}/mode/disarm`;
+                        break;
+                }
+
+                if (url) {
+                    server.call(`${url}`)
+                        .then( () => {
+                            this.nightMode = ( mode === Characteristic.SecuritySystemTargetState.NIGHT_ARM );
+                            this.targetMode = mode;
+                            fulfill();
+                        })
+                        .catch( (err) => {
+                            reject(err);
+                        });
+                }else{
+                    logger.error( `${mode} is not mapped to a url` );
+                    reject('unknown mode');
+                }
+
+            });
         },
 
         identify: function () {
@@ -45,13 +64,9 @@ function securitySystem(server, uuid, name) {
         },
         status: function () {
             return new Promise( (fulfill, reject) =>{
-                server.call(`/device/${uuid}/status`)
+                server.getDeviceStatus(uuid)
                     .then ( (data) => {
-
-                        this.alarming = data[0].alarming;
-                        this.armed = data[0].armed;
-                        this.mode = data[0].mode;
-
+                        this.flags = data[0].flags;
                         fulfill( this );
                     })
                     .catch( (err) => {
@@ -77,50 +92,71 @@ function securitySystem(server, uuid, name) {
         callback(); // success
     });
 
-    function getTargetState(value) {
+    function mapCurrentState(value){
 
-        if ( Controller.targetMode === null )
-            return getCurrentState(value);
-
-        return Controller.targetMode;
-
-    }
-
-    function getCurrentState(value){
-
-        if ( !value || value === null )
+        if ( !value )
             return null;
 
-        if ( value.mode === 'armed' || value.mode === 'force' || value.mode === 'vacation' )
+        let flags = value.flags;
+
+        if ( flags === undefined )
+            return null;
+
+        if ( flags.armed_away )
             value = Characteristic.SecuritySystemCurrentState.AWAY_ARM;
-        else if ( value.mode === 'stay' || value.mode === 'stay-instant' )
-            value = Characteristic.SecuritySystemCurrentState.STAY_ARM;
-        else if ( value.mode === 'night' || value.mode === 'night-instant' )
-            value = Characteristic.SecuritySystemCurrentState.NIGHT_ARM;
-        else if (value.mode === 'exit-delay' || value.mode === 'entry-delay' )
-            value = Controller.targetMode;
-        else if ( value.mode === 'not-ready' || value.mode === 'failed' || value.mode === 'disarmed' || value.mode === 'ready' )
+        else if ( flags.armed_stay ) {
+            value = ( Controller.nightMode ? Characteristic.SecuritySystemCurrentState.NIGHT_ARM : Characteristic.SecuritySystemCurrentState.STAY_ARM);
+        } else if ( flags.disarmed )
             value = Characteristic.SecuritySystemCurrentState.DISARMED;
-        else if (value.alarming)
+
+        if ( flags.alarm )
             value = Characteristic.SecuritySystemCurrentState.ALARM_TRIGGERED;
 
         return value;
     }
 
     server.subscribe( uuid, function(status){
-        this.alarming = status.alarming;
-        this.armed = status.armed;
-        this.mode = status.mode;
+        Controller.flags = status.flags;
 
-        securitySystemAccessory
-            .getService(Service.SecuritySystem)
-            .getCharacteristic(Characteristic.SecuritySystemTargetState)
-            .updateValue( getTargetState(status) );
+        let currentState = mapCurrentState(status);
+        let targetMode = Controller.targetMode;
 
+        if ( Controller.flags.arming ) {
+            // If system was armed at the panel we see a different state to the target one so
+            // update the target state and inform homekit.
+            if (Controller.targetMode !== currentState){
+                targetMode = currentState;
+            }
+
+            currentState = Controller.lastState;
+        }
+        else{
+
+            // If we disarm from the panel we need to reflect that in the target and current states
+            if ( currentState === Characteristic.SecuritySystemCurrentState.DISARMED ){
+                targetMode = currentState;
+            }
+
+            Controller.lastState = currentState;
+
+        }
+
+        // If we have changed the target state, inform homekit
+        if ( Controller.targetMode !== targetMode ){
+
+            Controller.targetMode = targetMode;
+
+            securitySystemAccessory
+                .getService(Service.SecuritySystem)
+                .getCharacteristic(Characteristic.SecuritySystemTargetState)
+                .updateValue( Controller.targetMode );
+        }
+
+        // reflect the current state to homekit
         securitySystemAccessory
             .getService(Service.SecuritySystem)
             .getCharacteristic(Characteristic.SecuritySystemCurrentState)
-            .updateValue( getCurrentState(status) );
+            .updateValue( currentState );
     });
 
     securitySystemAccessory
@@ -133,10 +169,10 @@ function securitySystem(server, uuid, name) {
 
             Controller.status()
                 .then( (value) =>{
-                    callback(null, getCurrentState(value) );
+                    callback(null, mapCurrentState(value) );
                 })
                 .catch( (err) =>{
-                    log.error( err );
+                    logger.error( err );
                     callback(err, null);
                 });
 
@@ -147,22 +183,16 @@ function securitySystem(server, uuid, name) {
         .getCharacteristic(Characteristic.SecuritySystemTargetState)
         .on('set', function(value, callback) {
 
-            Controller.setTargetMode(value);
-
-            callback();
+            Controller.setTargetMode(value)
+            .then( (value) =>{
+                callback(null);
+            })
+            .catch( (err) =>{
+                callback(err);
+            });
         })
         .on('get', function (callback) {
-
-            Controller.status()
-                .then( (value) =>{
-                    callback(null, getTargetState(value) );
-                })
-                .catch( (err) =>{
-                    log.error( err );
-                    callback(err, null);
-                });
-
-            //callback(null, Controller.targetMode );
+            callback(null, Controller.targetMode );
         });
 
     securitySystemAccessory
@@ -172,14 +202,13 @@ function securitySystem(server, uuid, name) {
 
             Controller.status()
                 .then( (value) =>{
-                    callback(null, value.mode === 'not-ready' ? 1 : 0 );
+                    callback(null, value.flags.ready );
                 })
                 .catch( (err) =>{
-                    log.error( err );
+                    logger.error( err );
                     callback(err, null);
                 });
 
-            //callback(null, Controller.targetMode );
         });
 
     return securitySystemAccessory;

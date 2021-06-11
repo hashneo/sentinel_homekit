@@ -4,8 +4,10 @@ const auth = require('sentinel-common').auth;
 const request = require('request');
 const WebSocketClient = require('websocket').client;
 const logger = require('sentinel-common').logger;
+const NodeCache = require( "node-cache" );
+const statusCache = new NodeCache( { stdTTL: 2, checkperiod: 120 } );
 
-function server() {
+module.exports = new function (){
 
     const that = this;
 
@@ -37,7 +39,7 @@ function server() {
                         }
 
                         if (resp.statusCode !== 200) {
-                            return reject(new Error(resp.statusCode));
+                            return reject(`call failed => ${resp.statusCode}`);
                         }
 
                         try {
@@ -74,9 +76,17 @@ function server() {
 
     this.getDeviceStatus = (id) => {
         return new Promise((fulfill, reject) => {
+/*
+            if ( statusCache.has(id) ){
+                let status = statusCache.get(id);
+                return fulfill( status );
+            }
+*/
             this.call(`/api/device/${id}/status`)
-                .then((status) => {
-                    fulfill(status[0]);
+                .then((result) => {
+                    let status = result;
+                    //statusCache.set(id,status);
+                    fulfill(status);
                 })
                 .catch((err) => {
                     reject(err);
@@ -133,7 +143,7 @@ function server() {
         let client = new WebSocketClient();
 
         client.on('connectFailed', function(error) {
-            console.log('Connect Error: ' + error.toString());
+            logger.info('Connect Error: ' + error.toString());
             setTimeout( connectWebSocket, 5000 );
         });
 
@@ -142,18 +152,20 @@ function server() {
             logger.info('WebSocket Client Connected');
 
             connection.on('error', function(error) {
-                console.log("Connection Error: " + error.toString());
+                logger.info("Connection Error: " + error.toString());
                 setTimeout( connectWebSocket, 5000 );
             });
 
             connection.on('close', function() {
-                console.log('echo-protocol Connection Closed');
+                logger.info('echo-protocol Connection Closed');
                 setTimeout( connectWebSocket, 5000 );
             });
 
             connection.on('message', function(message) {
                 if (message.type === 'utf8') {
                     let data = JSON.parse(message.utf8Data);
+
+                    logger.debug(`inbound message => ${JSON.stringify(data)}`);
 
                     if (subscriptions[data.device])
                         subscriptions[data.device]( data.status );
@@ -170,7 +182,7 @@ function server() {
                 client.connect( wss, 'echo-protocol', null, headers );
             })
             .catch((err) => {
-                console.error(err);
+                logger.error(err);
                 process.exit(1);
             });
     }
@@ -179,4 +191,3 @@ function server() {
 
 }
 
-module.exports = new server();

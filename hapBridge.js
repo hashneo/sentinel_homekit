@@ -101,6 +101,7 @@ function hapBridge(config, server) {
             const LightAccessory = require('./accessories/light');
             const LockAccessory = require('./accessories/lock');
             const OutletAccessory = require('./accessories/outlet');
+            const SwitchAccessory = require('./accessories/switch');
             const GarageAccessory = require('./accessories/garage-opener');
             const MotionSensorAccessory = require('./accessories/motion-sensor');
             const TemperatureSensorAccessory = require('./accessories/temperature-sensor');
@@ -110,14 +111,20 @@ function hapBridge(config, server) {
             const Co2SensorAccessory = require('./accessories/co2-sensor');
             const SmokeSensorAccessory = require('./accessories/smoke-sensor');
             const SecuritySystemAccessory = require('./accessories/security-system');
+            const BatteryAccessory = require('./accessories/battery');
+            const TimeAccessory = require('./accessories/time');
 
             devices.forEach(function (device) {
 
-                if (device.type.indexOf('light.') == 0) {
+                if (device.type.indexOf('light.') === 0) {
                     accessories.push(new LightAccessory(server, device.type, device.id, device.name));
                 }
 
                 if (device.type === 'switch') {
+                    accessories.push(new SwitchAccessory(server, device.type, device.id, device.name));
+                }
+
+                if (device.type === 'outlet') {
                     accessories.push(new OutletAccessory(server, device.type, device.id, device.name));
                 }
 
@@ -129,10 +136,6 @@ function hapBridge(config, server) {
                     accessories.push(new GarageAccessory(server, device.id, device.name));
                 }
 
-                if (device.type === 'sensor.motion') {
-                    accessories.push(new MotionSensorAccessory(server, device.id, device.name));
-                }
-
                 if (device.type === 'sensor.temperature') {
                     accessories.push(new TemperatureSensorAccessory(server, device.id, device.name));
                 }
@@ -141,7 +144,11 @@ function hapBridge(config, server) {
                     accessories.push(new HumiditySensorAccessory(server, device.id, device.name));
                 }
 
-                if (device.type === 'sensor.door' || device.type === 'sensor.window') {
+                if (device.type === 'sensor.motion') {
+                    accessories.push(new MotionSensorAccessory(server, device.id, device.name));
+                }
+
+                if (device.type === 'sensor.contact' || device.type === 'sensor.door' || device.type === 'sensor.window') {
                     accessories.push(new ContactSensorAccessory(server, device.id, device.name));
                 }
 
@@ -157,8 +164,16 @@ function hapBridge(config, server) {
                     accessories.push(new SmokeSensorAccessory(server, device.id, device.name));
                 }
 
-                if (device.type === 'alarm.partition') {
+                if (device.type === 'alarm.panel') {
                     accessories.push(new SecuritySystemAccessory(server, device.id, device.name));
+                }
+
+                if (device.type === 'energy.gateway') {
+                    accessories.push(new BatteryAccessory(server, device.id, device.name));
+                }
+
+                if (device.type === 'system.timer') {
+                    accessories.push(new TimeAccessory(server, device.id, device.name));
                 }
             });
 
@@ -175,10 +190,9 @@ function hapBridge(config, server) {
             };
 
             bridge.publish(publishInfo, false);
-            /*
-                    printSetupInfo();
-                    printPin(publishInfo.pincode);
-            */
+
+            printSetupInfo();
+            printPin(publishInfo.pincode);
 
             let signals = {'SIGINT': 2, 'SIGTERM': 15};
             Object.keys(signals).forEach(function (signal) {
@@ -193,14 +207,18 @@ function hapBridge(config, server) {
         });
 
     };
-/*
+
     function printPin(pin){
         console.log("Or enter this code with your HomeKit app on your iOS device to pair with Homebridge:");
+        console.log(pin);
+/*
         console.log(chalk.black.bgWhite("                       "));
         console.log(chalk.black.bgWhite("    ┌────────────┐     "));
         console.log(chalk.black.bgWhite("    │ " + pin + " │     "));
         console.log(chalk.black.bgWhite("    └────────────┘     "));
         console.log(chalk.black.bgWhite("                       "));
+
+ */
     }
 
     function printSetupInfo() {
@@ -208,9 +226,9 @@ function hapBridge(config, server) {
         console.log(bridge.setupURI());
 
         console.log("Scan this code with your HomeKit app on your iOS device to pair with Homebridge:");
-        qrcode.generate(bridge.setupURI());
+        //qrcode.generate(bridge.setupURI());
     }
-*/
+
 
 }
 

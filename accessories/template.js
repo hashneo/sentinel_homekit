@@ -1,6 +1,7 @@
 const Accessory = require('hap-nodejs').Accessory;
 const Service = require('hap-nodejs').Service;
 const Characteristic = require('hap-nodejs').Characteristic;
+const logger = require('sentinel-common').logger;
 
 function securitySystem(server, uuid, name) {
 
@@ -19,7 +20,7 @@ function securitySystem(server, uuid, name) {
         },
         status: function () {
             return new Promise( (fulfill, reject) =>{
-                server.call(`/device/${uuid}/status`)
+                server.getDeviceStatus(uuid)
                     .then ( (data) => {
                         fulfill( this.state );
                     })
@@ -62,7 +63,7 @@ function securitySystem(server, uuid, name) {
                     callback(null, value );
                 })
                 .catch( (err) =>{
-                    log.error( err );
+                    logger.error( err );
                     callback(err, null);
                 });
 

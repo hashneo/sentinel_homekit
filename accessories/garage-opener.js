@@ -30,7 +30,7 @@ function lock(server, uuid, name) {
         status: function () {
 
             return new Promise( (fulfill, reject) =>{
-                server.call(`/device/${uuid}/status`)
+                server.getDeviceStatus(uuid)
                     .then ( (data) => {
                         let states = processStatus( data[0].state );
                         GarageController.state = states.current;
@@ -104,7 +104,7 @@ function lock(server, uuid, name) {
         .setCharacteristic(Characteristic.TargetDoorState, Characteristic.TargetDoorState.CLOSED) // force initial state to CLOSED
         .getCharacteristic(Characteristic.TargetDoorState)
         .on('set', function (value, callback) {
-            if (value == Characteristic.TargetDoorState.CLOSED) {
+            if (value === Characteristic.TargetDoorState.CLOSED) {
                 GarageController.close()
                     .then ( () =>{
                         callback();
@@ -114,7 +114,7 @@ function lock(server, uuid, name) {
                         callback(err);
                     });
             }
-            else if (value == Characteristic.TargetDoorState.OPEN) {
+            else if (value === Characteristic.TargetDoorState.OPEN) {
                 GarageController.open()
                     .then ( () =>{
                         callback();

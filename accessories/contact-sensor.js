@@ -1,6 +1,7 @@
 const Accessory = require('hap-nodejs').Accessory;
 const Service = require('hap-nodejs').Service;
 const Characteristic = require('hap-nodejs').Characteristic;
+const logger = require('sentinel-common').logger;
 
 function sensor(server, uuid, name) {
 
@@ -19,9 +20,9 @@ function sensor(server, uuid, name) {
         },
         status: function () {
             return new Promise( (fulfill, reject) =>{
-                server.call(`/device/${uuid}/status`)
+                server.getDeviceStatus(uuid)
                     .then ( (data) => {
-                        this.state = data[0].tripped.current;
+                        this.state = data[0].contact.tripped.current;
 
                         if ( data[0].battery ) {
                             this.lowBattery = parseInt(data[0].battery.level) < 25;
@@ -57,7 +58,7 @@ function sensor(server, uuid, name) {
     });
 
     server.subscribe( uuid, function(status){
-        SensorController.state = status.tripped.current;
+        SensorController.state = status.contact.tripped.current;
 
         if ( status.battery ) {
             SensorController.lowBattery = parseInt(status.battery.level) < 25;
@@ -84,7 +85,7 @@ function sensor(server, uuid, name) {
                     callback(null, SensorController.state ? Characteristic.ContactSensorState.CONTACT_NOT_DETECTED : Characteristic.ContactSensorState.CONTACT_DETECTED );
                 })
                 .catch( (err) =>{
-                    log.error( err );
+                    logger.error( err );
                     callback(err, null);
                 });
 
@@ -101,7 +102,7 @@ function sensor(server, uuid, name) {
                     callback(null, SensorController.lowBattery ? 1 : 0);
                 })
                 .catch( (err) =>{
-                    log.error( err );
+                    logger.error( err );
                     callback(err, null);
                 });
 

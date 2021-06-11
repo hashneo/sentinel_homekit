@@ -1,6 +1,7 @@
 const Accessory = require('hap-nodejs').Accessory;
 const Service = require('hap-nodejs').Service;
 const Characteristic = require('hap-nodejs').Characteristic;
+const logger = require('sentinel-common').logger;
 
 const Convert = require('color-convert');
 
@@ -12,7 +13,6 @@ function light(server, type, uuid, name) {
 
         power : false,
         brightness : 0,
-        lastBrightness : 0,
         saturation : 0,
         hue : 0,
         manufacturer : 'sentinel',
@@ -20,8 +20,7 @@ function light(server, type, uuid, name) {
         serialNumber : uuid,
 
         setRGB : function(value) {
-
-            let v = Convert.hex.hsl( value.substring(0,6) );
+            let v = Convert.hex.hsl( parseInt(`0x${value.red}`), parseInt(`0x${value.green}`), parseInt(`0x${value.blue}`) );
 
             this.hue = v[0];
             this.saturation = v[1];
@@ -29,7 +28,6 @@ function light(server, type, uuid, name) {
         },
 
         getRGB : function() {
-
             let v = Convert.hsl.rgb( this.hue,
                 this.saturation,
                 this.brightness );
@@ -42,12 +40,23 @@ function light(server, type, uuid, name) {
         },
 
         setPower: function(value) { //set power of accessory
-            this.power = value;
-            return server.call(`/light/${uuid}/${value?'on':'off'}`);
+            return new Promise( (fulfill, reject) => {
+                if ( this.power === value )
+                    return fulfill();
+
+                server.call(`/light/${uuid}/${value?'on':'off'}`)
+                    .then(()=>{
+                        this.power = value;
+                        fulfill();
+                    })
+                    .catch( (err) =>{
+                        reject(err);
+                    })
+            })
+
         },
 
         getPower: function() { //get power of accessory
-
             return new Promise( (fulfill, reject) => {
                 LightController.status()
                     .then( () => {
@@ -60,19 +69,16 @@ function light(server, type, uuid, name) {
         },
 
         setBrightness: function(value) { //set brightness
-
-            if ( value === this.brightness )
-                return;
-
-            this.brightness = value;
-
-            if ( type === 'light.dimmable.rgbw') {
-                let rgb = this.getRGB();
-                console.log(rgb);
-                return server.call(`/light/${uuid}/rgb/color?r=${rgb.r}&g=${rgb.g}&b=${rgb.b}&w=0`);
-            }
-            else
-                return server.call(`/light/${uuid}/level/${value}`);
+            return new Promise( (fulfill, reject) => {
+                server.call(`/light/${uuid}/level/${value}`)
+                    .then(() => {
+                        this.brightness = value;
+                        fulfill();
+                    })
+                    .catch((err) => {
+                        reject(err);
+                    })
+            });
         },
 
         getBrightness: function() { //get brightness
@@ -89,13 +95,28 @@ function light(server, type, uuid, name) {
 
         setSaturation: function(value) {
 
-            if ( value === this.saturation )
-                return;
+            return new Promise( (fulfill, reject) =>{
 
-            this.saturation = value;
-            let rgb = this.getRGB();
-            console.log(rgb);
-            return server.call(`/light/${uuid}/rgb/color?r=${rgb.r}&g=${rgb.g}&b=${rgb.b}&w=0`);
+                let v = Convert.hsl.rgb( this.hue,
+                    value,
+                    this.brightness );
+
+                let rgb = {
+                    r: v[0],
+                    g: v[1],
+                    b: v[2]
+                };
+
+                server.call(`/light/${uuid}/rgb/color?r=${rgb.r}&g=${rgb.g}&b=${rgb.b}&w=0`)
+                    .then(()=>{
+                        this.saturation = value;
+                        fulfill();
+                    })
+                    .catch( (err) =>{
+                        reject(err);
+                    })
+            });
+
         },
 
         getSaturation: function() {
@@ -112,13 +133,27 @@ function light(server, type, uuid, name) {
 
         setHue: function(value) { //set brightness
 
-            if ( value === this.hue )
-                return;
+            return new Promise( (fulfill, reject) =>{
 
-            this.hue = value;
-            let rgb = this.getRGB();
-            console.log(rgb);
-            return server.call(`/light/${uuid}/rgb/color?r=${rgb.r}&g=${rgb.g}&b=${rgb.b}&w=0`);
+                let v = Convert.hsl.rgb( value,
+                    this.saturation,
+                    this.brightness );
+
+                let rgb = {
+                    r: v[0],
+                    g: v[1],
+                    b: v[2]
+                };
+
+                server.call(`/light/${uuid}/rgb/color?r=${rgb.r}&g=${rgb.g}&b=${rgb.b}&w=0`)
+                    .then(()=>{
+                        this.hue = value;
+                        fulfill();
+                    })
+                    .catch( (err) =>{
+                        reject(err);
+                    })
+            });
         },
 
         getHue: function() { //get hue
@@ -139,20 +174,21 @@ function light(server, type, uuid, name) {
 
         status: function () {
             return new Promise( (fulfill, reject) =>{
-                server.call(`/device/${uuid}/status`)
+                server.getDeviceStatus(uuid)
                     .then ( (data) => {
                         data = data[0];
-                        if ( type.startsWith( 'light.dimmable' ) ) {
-                            this.power = (data.level > 0);
-                        } else {
-                            this.power = data.on;
+
+                        if ( data.switch ) {
+
+                            if (data.switch.level !== undefined)
+                                this.brightness = parseInt( data.switch.level );
+
+                            if (data.switch.on !== undefined )
+                                this.power = data.switch.on;
                         }
 
-                        if ( type === 'light.dimmable.rgbw') {
-                            this.setRGB(data.color);
-                        } else if ( type === 'light.dimmable') {
-                            this.brightness = data.level;
-                        }
+                        if ( data.color !== undefined )
+                            this.setRGB( data.color );
 
                         fulfill( data );
                     })
@@ -185,26 +221,18 @@ function light(server, type, uuid, name) {
 
     // Add the actual Lightbulb Service and listen for change events from iOS.
     // We can see the complete list of Services and Characteristics in `lib/gen/HomeKitTypes.js`
+
     lightAccessory
         .addService(Service.Lightbulb, name) // services exposed to the user should have "names" like "Light" for this case
         .getCharacteristic(Characteristic.On)
         .on('set', function(value, callback) {
-
-            LightController.power = value;
-
-            if ( value && type.startsWith( 'light.dimmable' ) ) {
-                value = LightController.brightness;
-                LightController.brightness = 0;
-                LightController.setBrightness( value );
-            } else {
-                LightController.setPower(value);
-            }
-            // Our light is synchronous - this value has been successfully set
-            // Invoke the callback when you finished processing the request
-            // If it's going to take more than 1s to finish the request, try to invoke the callback
-            // after getting the request instead of after finishing it. This avoids blocking other
-            // requests from HomeKit.
-            callback();
+            LightController.setPower(value)
+                .then(() =>{
+                    callback(null);
+                })
+                .catch((err)=>{
+                    callback(err);
+                });
         })
         // We want to intercept requests for our current power state so we can query the hardware itself instead of
         // allowing HAP-NodeJS to return the cached Characteristic.value.
@@ -218,57 +246,21 @@ function light(server, type, uuid, name) {
                 });
         });
 
-    // To inform HomeKit about changes occurred outside of HomeKit (like user physically turn on the light)
-    // Please use Characteristic.updateValue
-    //
-    server.subscribe( uuid, function(status){
-
-        LightController.power = status.on;
-
-        lightAccessory
-            .getService(Service.Lightbulb)
-            .getCharacteristic(Characteristic.On)
-            .updateValue(LightController.power);
-
-        if ( type === 'light.dimmable.rgbw') {
-
-            LightController.setRGB(status.color);
-
-            lightAccessory
-                .getService(Service.Lightbulb)
-                .getCharacteristic(Characteristic.Brightness)
-                .updateValue(LightController.brightness);
-            lightAccessory
-                .getService(Service.Lightbulb)
-                .getCharacteristic(Characteristic.Saturation)
-                .updateValue(LightController.saturation);
-            lightAccessory
-                .getService(Service.Lightbulb)
-                .getCharacteristic(Characteristic.Hue)
-                .updateValue(LightController.hue);
-
-        } else if ( type === 'light.dimmable') {
-
-            if ( LightController.power ) {
-                LightController.brightness = status.level;
-                lightAccessory
-                    .getService(Service.Lightbulb)
-                    .getCharacteristic(Characteristic.Brightness)
-                    .updateValue(LightController.brightness);
-            }
-        }
-    });
-
-
     // also add an "optional" Characteristic for Brightness
     if ( type.startsWith( 'light.dimmable' ) ) {
         lightAccessory
             .getService(Service.Lightbulb)
             .addCharacteristic(Characteristic.Brightness)
             .on('set', function (value, callback) {
-                LightController.lastBrightness = value;
-                LightController.setBrightness(value);
-                callback();
+                //LightController.lastBrightness = value;
+                LightController.setBrightness(value)
+                    .then(() =>{
+                        callback(null);
+                    })
+                    .catch((err)=>{
+                        callback(err);
+                    });
+
             })
             .on('get', function (callback) {
                 LightController.getBrightness()
@@ -287,8 +279,13 @@ function light(server, type, uuid, name) {
             .getService(Service.Lightbulb)
             .addCharacteristic(Characteristic.Saturation)
             .on('set', function (value, callback) {
-                LightController.setSaturation(value);
-                callback();
+                LightController.setSaturation(value)
+                    .then(() =>{
+                        callback(null);
+                    })
+                    .catch((err)=>{
+                        callback(err);
+                    });
             })
             .on('get', function (callback) {
                 LightController.getSaturation()
@@ -305,8 +302,13 @@ function light(server, type, uuid, name) {
             .getService(Service.Lightbulb)
             .addCharacteristic(Characteristic.Hue)
             .on('set', function (value, callback) {
-                LightController.setHue(value);
-                callback();
+                LightController.setHue(value)
+                    .then(() =>{
+                        callback(null);
+                    })
+                    .catch((err)=>{
+                        callback(err);
+                    });
             })
             .on('get', function (callback) {
                 LightController.getHue()
@@ -318,6 +320,47 @@ function light(server, type, uuid, name) {
                     });
             });
     }
+
+
+    // To inform HomeKit about changes occurred outside of HomeKit (like user physically turn on the light)
+    // Please use Characteristic.updateValue
+    //
+    server.subscribe( uuid, function(status){
+
+        if ( status.switch ) {
+
+            LightController.power = status.switch.on;
+
+            lightAccessory
+                .getService(Service.Lightbulb)
+                .getCharacteristic(Characteristic.On)
+                .updateValue(LightController.power);
+
+            if (status.switch.level !== undefined){
+
+                LightController.brightness = parseInt( status.switch.level );
+
+                lightAccessory
+                    .getService(Service.Lightbulb)
+                    .getCharacteristic(Characteristic.Brightness)
+                    .updateValue(LightController.brightness);
+            }
+        }
+
+        if ( status.color !== undefined ) {
+            LightController.setRGB(status.color);
+
+            lightAccessory
+                .getService(Service.Lightbulb)
+                .getCharacteristic(Characteristic.Saturation)
+                .updateValue(LightController.saturation);
+            lightAccessory
+                .getService(Service.Lightbulb)
+                .getCharacteristic(Characteristic.Hue)
+                .updateValue(LightController.hue);
+        }
+
+    });
 
     return lightAccessory;
 }

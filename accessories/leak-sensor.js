@@ -19,9 +19,9 @@ function sensor(server, uuid, name) {
         },
         status: function () {
             return new Promise( (fulfill, reject) =>{
-                server.call(`/device/${uuid}/status`)
+                server.getDeviceStatus(uuid)
                     .then ( (data) => {
-                        this.state = data[0].tripped.current;
+                        this.state = data[0].moisture.tripped.current;
 
                         if ( data[0].battery ) {
                             this.lowBattery = parseInt(data[0].battery.level) < 25;
@@ -57,7 +57,7 @@ function sensor(server, uuid, name) {
     });
 
     server.subscribe( uuid, function(status){
-        SensorController.state = status.tripped.current;
+        SensorController.state = status.moisture.tripped.current;
 
         if ( status.battery ) {
             SensorController.lowBattery = parseInt(status.battery.level) < 25;
@@ -84,7 +84,7 @@ function sensor(server, uuid, name) {
                     callback(null, SensorController.state ? 1 : 0 );
                 })
                 .catch( (err) =>{
-                    log.error( err );
+                    logger.error( err );
                     callback(err, null);
                 });
 
@@ -101,7 +101,7 @@ function sensor(server, uuid, name) {
                     callback(null, SensorController.lowBattery ? 1 : 0);
                 })
                 .catch( (err) =>{
-                    log.error( err );
+                    logger.error( err );
                     callback(err, null);
                 });
 
