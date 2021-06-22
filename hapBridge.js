@@ -77,6 +77,7 @@ function hapBridge(config, server) {
             info.setCharacteristic(Characteristic.SerialNumber, serial);
             info.setCharacteristic(Characteristic.FirmwareRevision, '0.1');
 
+
             bridge.on('listening', function (port) {
                 logger.info(`Homebridge is running on port ${port}`);
 
@@ -186,7 +187,8 @@ function hapBridge(config, server) {
                 username: serial,
                 port: config.port || 0,
                 pincode: pinCode,
-                category: Accessory.Categories.BRIDGE
+                category: Accessory.Categories.BRIDGE,
+                bind: process.env.BIND_DEVICES || '::'
             };
 
             bridge.publish(publishInfo, false);

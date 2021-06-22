@@ -1,9 +1,12 @@
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: sentinel-homekit
 spec:
   replicas: 1
+  selector:
+    matchLabels:
+      app: homekit
   template:
     metadata:
       labels:
@@ -13,25 +16,19 @@ spec:
     spec:
       hostNetwork: true
       containers:
-        -
-          name: sentinel-homekit
-          image: docker.steventaylor.me/sentinel/homekit/homekit-x86_64
-          imagePullPolicy: Always
-          env:
-          - name: PORT
-            value: "5000"
-          - name: CONSUL
-            value: "consul"
-          ports:
-            -
-              containerPort: 5000
-              protocol: TCP
-          resources:
-              limits:
-                  memory: "512Mi"
-              requests:
-                  memory: "512Mi"
-      imagePullSecrets:
-      - name: regcred
-      nodeSelector:
-          beta.kubernetes.io/arch: amd64
+      -
+        name: sentinel-homekit
+        image: docker.io/hashneo/sentinel-homekit-x86_64:latest
+        imagePullPolicy: IfNotPresent
+        env:
+        - name: PORT
+          value: "5000"
+        - name : CONSUL
+          value : "consul.home-sentinel.ai"
+        - name: NEW_RELIC_NO_CONFIG_FILE
+          value: "false"
+        ports:
+          -
+            containerPort: 5000
+            protocol: TCP
+
