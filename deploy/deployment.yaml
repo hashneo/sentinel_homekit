@@ -15,6 +15,10 @@ spec:
         version: v1
     spec:
       hostNetwork: true
+      volumes:
+      - name: data
+        persistentVolumeClaim:
+          claimName: data-homekit
       containers:
       -
         name: sentinel-homekit
@@ -24,13 +28,13 @@ spec:
         - name: PORT
           value: "5000"
         - name : CONSUL
-          value : "consul.home-sentinel.ai"
+          value : "consul"
         - name: NEW_RELIC_NO_CONFIG_FILE
           value: "false"
-        - name: BIND_DEVICES
-          value: "ens192"
         ports:
           -
             containerPort: 5000
             protocol: TCP
-
+        volumeMounts:
+          - mountPath: /src/persist
+            name: data

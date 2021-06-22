@@ -65,16 +65,16 @@ function lock(server, uuid, name) {
 
         let states = { current: null, target: null };
 
-        if (status.state === 'opening') {
+        if (status === 'opening') {
             states.current = Characteristic.CurrentDoorState.OPENING;
             states.target = Characteristic.TargetDoorState.OPEN;
-        } else if (status.state === 'open') {
+        } else if (status === 'open') {
             states.current= Characteristic.CurrentDoorState.OPEN;
             states.target = Characteristic.TargetDoorState.OPEN;
-        } else if (status.state === 'closing'){
+        } else if (status === 'closing'){
             states.current = Characteristic.CurrentDoorState.CLOSING;
             states.target = Characteristic.TargetDoorState.CLOSED;
-        } else if ( status.state ===  'closed' ) {
+        } else if ( status ===  'closed' ) {
             states.current = Characteristic.CurrentDoorState.CLOSED;
             states.target = Characteristic.TargetDoorState.CLOSED;
         }

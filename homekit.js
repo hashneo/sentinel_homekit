@@ -57,8 +57,16 @@ function homekit(config) {
                 if (err)
                     throw (err);
 
-                that.createBridge( JSON.parse(data.Value) );
+                let d = JSON.parse(data.Value);
 
+                if (process.env.DEBUG){
+
+                    if ( d.development )
+                        that.createBridge(d);
+
+                } else {
+                    that.createBridge(d);
+                }
             });
         });
     });
