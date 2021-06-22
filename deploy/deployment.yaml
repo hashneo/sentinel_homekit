@@ -16,25 +16,25 @@ spec:
     spec:
       hostNetwork: true
       volumes:
-      - name: data
-        persistentVolumeClaim:
-          claimName: data-homekit
+        - name: data
+          persistentVolumeClaim:
+            claimName: data-homekit
       containers:
-      -
-        name: sentinel-homekit
-        image: docker.io/hashneo/sentinel-homekit-x86_64:latest
-        imagePullPolicy: Always
-        env:
-        - name: PORT
-          value: "5000"
-        - name : CONSUL
-          value : "consul"
-        - name: NEW_RELIC_NO_CONFIG_FILE
-          value: "false"
-        ports:
-          -
-            containerPort: 5000
-            protocol: TCP
-        volumeMounts:
-          - mountPath: /src/persist
-            name: data
+        -
+          name: app
+          image: docker.io/hashneo/sentinel-homekit-x86_64:latest
+          imagePullPolicy: Always
+          env:
+            - name: PORT
+              value: "5000"
+            - name : CONSUL
+              value : "consul"
+            - name: NEW_RELIC_NO_CONFIG_FILE
+              value: "false"
+          ports:
+            -
+              containerPort: 5000
+              protocol: TCP
+          volumeMounts:
+            - mountPath: /src/persist
+              name: data
