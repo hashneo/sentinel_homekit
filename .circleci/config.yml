@@ -1,11 +1,8 @@
 version: 2.1
 
-orbs:
-  kube-orb: circleci/kubernetes@0.11.0
-
 jobs:
   build:
-    machine: true
+    machine: false
     steps:
 
       - checkout
