@@ -19,7 +19,7 @@ spec:
       -
         name: sentinel-homekit
         image: docker.io/hashneo/sentinel-homekit-x86_64:latest
-        imagePullPolicy: IfNotPresent
+        imagePullPolicy: Always
         env:
         - name: PORT
           value: "5000"
@@ -27,6 +27,8 @@ spec:
           value : "consul.home-sentinel.ai"
         - name: NEW_RELIC_NO_CONFIG_FILE
           value: "false"
+        - name: BIND_DEVICES
+          value: "ens192"
         ports:
           -
             containerPort: 5000
