@@ -117,64 +117,54 @@ function hapBridge(config, server) {
 
             devices.forEach(function (device) {
 
+                logger.debug(`adding new accessory ${device.type} => ${device.id} => ${device.name}`);
+
                 if (device.type.indexOf('light.') === 0) {
                     accessories.push(new LightAccessory(server, device.type, device.id, device.name));
-                }
-
+                } else
                 if (device.type === 'switch') {
                     accessories.push(new SwitchAccessory(server, device.type, device.id, device.name));
-                }
-
+                } else
                 if (device.type === 'outlet') {
                     accessories.push(new OutletAccessory(server, device.type, device.id, device.name));
-                }
-
+                } else
                 if (device.type === 'lock') {
                     accessories.push(new LockAccessory(server, device.id, device.name));
-                }
-
+                } else
                 if (device.type === 'garage.opener') {
                     accessories.push(new GarageAccessory(server, device.id, device.name));
-                }
-
+                } else
                 if (device.type === 'sensor.temperature') {
                     accessories.push(new TemperatureSensorAccessory(server, device.id, device.name));
-                }
-
+                } else
                 if (device.type === 'sensor.humidity') {
                     accessories.push(new HumiditySensorAccessory(server, device.id, device.name));
-                }
-
+                } else
                 if (device.type === 'sensor.motion') {
                     accessories.push(new MotionSensorAccessory(server, device.id, device.name));
-                }
-
+                } else
                 if (device.type === 'sensor.contact' || device.type === 'sensor.door' || device.type === 'sensor.window') {
                     accessories.push(new ContactSensorAccessory(server, device.id, device.name));
-                }
-
+                } else
                 if (device.type === 'sensor.leak') {
                     accessories.push(new LeakSensorAccessory(server, device.id, device.name));
-                }
-
+                } else
                 if (device.type === 'sensor.co2') {
                     accessories.push(new Co2SensorAccessory(server, device.id, device.name));
-                }
-
+                } else
                 if (device.type === 'sensor.smoke' || device.type === 'sensor.heat') {
                     accessories.push(new SmokeSensorAccessory(server, device.id, device.name));
-                }
-
+                } else
                 if (device.type === 'alarm.panel') {
                     accessories.push(new SecuritySystemAccessory(server, device.id, device.name));
-                }
-
+                } else
                 if (device.type === 'energy.gateway') {
                     accessories.push(new BatteryAccessory(server, device.id, device.name));
-                }
-
+                } else
                 if (device.type === 'system.timer') {
                     accessories.push(new TimeAccessory(server, device.id, device.name));
+                } else {
+                    logger.error(`Unable to match accessory type to anything, ${device.type} => ${device.id} => ${device.name}`);
                 }
             });
 
