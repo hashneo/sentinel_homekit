@@ -153,7 +153,7 @@ module.exports = new function (){
 
             connection.on('error', function(error) {
                 logger.info("Connection Error: " + error.toString());
-                setTimeout( connectWebSocket, 5000 );
+                //setTimeout( connectWebSocket, 5000 );
             });
 
             connection.on('close', function() {

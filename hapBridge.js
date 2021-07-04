@@ -114,6 +114,7 @@ function hapBridge(config, server) {
             const SecuritySystemAccessory = require('./accessories/security-system');
             const BatteryAccessory = require('./accessories/battery');
             const TimeAccessory = require('./accessories/time');
+            const ValveAccessory = require('./accessories/valve');
 
             devices.forEach(function (device) {
 
@@ -163,6 +164,9 @@ function hapBridge(config, server) {
                 } else
                 if (device.type === 'system.timer') {
                     accessories.push(new TimeAccessory(server, device.id, device.name));
+                } else
+                if (device.type === 'water.valve') {
+                    accessories.push(new ValveAccessory(server, device.id, device.name));
                 } else {
                     logger.error(`Unable to match accessory type to anything, ${device.type} => ${device.id} => ${device.name}`);
                 }

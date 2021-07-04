@@ -55,7 +55,7 @@ function hvac(server, uuid, name) {
 
     server.subscribe( uuid, function(status){
     });
-
+/*
     hvacAccessory
         .addService(Service.)
         .getCharacteristic(Characteristic.)
@@ -74,7 +74,7 @@ function hvac(server, uuid, name) {
                 });
 
         });
-
+*/
 
     return hvacAccessory;
 }

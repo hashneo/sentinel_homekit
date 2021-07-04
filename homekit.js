@@ -30,10 +30,6 @@ function homekit(config) {
 
                     let path = global.config.path() + '/' + bridgeInfo.serial;
 
-                    if (process.env.DEBUG){
-                        bridgeInfo.development = true;
-                    }
-
                     global.consul.kv.set(path, JSON.stringify(bridgeInfo), function (err, data) {
                         if (err)
                             return reject(err);
@@ -63,14 +59,8 @@ function homekit(config) {
 
                 let d = JSON.parse(data.Value);
 
-                if (process.env.DEBUG){
+               that.createBridge(d);
 
-                    if ( d.development )
-                        that.createBridge(d);
-
-                } else {
-                    that.createBridge(d);
-                }
             });
         });
     });
