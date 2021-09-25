@@ -9,10 +9,15 @@ const cookieParser = require('cookie-parser');
 
 const uuid = require('uuid');
 
-const consul = require('consul')( {
+let opts = {
     host: process.env.CONSUL || '127.0.0.1',
+    port: parseInt( process.env.CONSUL_PORT || '8500' ),
     promisify: true
-});
+};
+
+opts.secure = process.env.CONSUL_SECURE || (opts.port === 443);
+
+const consul = require('consul')( opts  );
 
 const logger = require('sentinel-common').logger;
 
